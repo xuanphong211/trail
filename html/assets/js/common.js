@@ -133,6 +133,7 @@
     if (left + w > vw - 8) left = rect.left - gap - w;
     if (left < 8) left = Math.max(8, Math.min(vw - w - 8, rect.left));
     var top = rect.top + rect.height / 2 - h / 2;
+    if (rect.minTop != null) top = Math.max(top, rect.minTop);   // 지도 제목 등을 가리지 않게
     top = Math.max(8, Math.min(vh - h - 8, top));
     el.style.left = Math.round(left) + 'px';
     el.style.top = Math.round(top) + 'px';

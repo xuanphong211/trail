@@ -276,14 +276,23 @@
       var p = pz.toClient(f.fx, f.fy);
       showSection(i, { pinned: true, sheet: sheet, x: p.x, y: p.y, anchor: sheet ? null : anchorFn(f) });
     }
+    // 범례 옆 팝업 위치: 가로는 범례 전체의 오른쪽(다른 줄 글자를 가리지 않게), 세로는 해당 줄
+    function legendRect(el) {
+      var b = el.getBoundingClientRect(), right = b.right;
+      legendRows.forEach(function (q) { right = Math.max(right, q.el.getBoundingClientRect().right); });
+      if (D.legendBox) right = Math.max(right, pz.toClient(D.legendBox[2] / W, 0).x);   // 범례 흰 상자 오른쪽 끝
+      var t = canvas.querySelector('.map-title'), minTop = null;
+      if (t && getComputedStyle(t).display !== 'none') minTop = t.getBoundingClientRect().bottom + 8;  // 지도 제목 아래로
+      return { left: b.left, right: right, top: b.top, bottom: b.bottom, width: right - b.left, height: b.height, minTop: minTop };
+    }
     function pinGroup(r) {
       pinnedKey = 'g' + legendRows.indexOf(r);
       setActive(idxOfNos(r.data.sections));
-      var rc = r.el.getBoundingClientRect();
+      var rc = legendRect(r.el);
       if (r.data.sections.length === 1) {
         var i = idxOfNos(r.data.sections)[0];
         pinnedKey = i;
-        showSection(i, { pinned: true, sheet: F.isSheet(), rect: rc, anchor: function () { var b = r.el.getBoundingClientRect(); return { x: b.right - 6, y: b.top }; } });
+        showSection(i, { pinned: true, sheet: F.isSheet(), rect: rc, anchor: function () { var b = legendRect(r.el); return { x: b.right - 6, y: b.top }; } });
       } else {
         showGroup(r.data, { pinned: true, sheet: F.isSheet(), rect: rc });
       }
@@ -321,8 +330,8 @@
         if (hoverKey === key && popup.isOpen()) return;
         hoverKey = key;
         setActive(idxOfNos(r.data.sections));
-        if (r.data.sections.length === 1) showSection(idxOfNos(r.data.sections)[0], { rect: t.getBoundingClientRect() });
-        else showGroup(r.data, { rect: t.getBoundingClientRect() });
+        if (r.data.sections.length === 1) showSection(idxOfNos(r.data.sections)[0], { rect: legendRect(t) });
+        else showGroup(r.data, { rect: legendRect(t) });
       }
     });
     hits.addEventListener('pointermove', function (e) {
