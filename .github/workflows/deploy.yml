@@ -1,4 +1,4 @@
-name: Deploy to VPS
+name: Deploy to VPS (Git Changed Files Only)
 
 on:
   push:
@@ -8,19 +8,44 @@ on:
 
 jobs:
   deploy:
-    name: Sync files to VPS
+    name: Copy changed files only
     runs-on: ubuntu-latest
     steps:
-      - name: 🚚 Checkout Code
+      - name: 🚚 Checkout Code (with Git history)
         uses: actions/checkout@v4
-
-      - name: 🚀 Copy files via SFTP / SSH
-        uses: appleboy/scp-action@master
         with:
-          host: ${{ secrets.SERVER_HOST }}
-          username: ${{ secrets.SERVER_USER }}
-          password: ${{ secrets.SFTP_PASSWORD }}
-          port: 22
-          source: "html/*"
-          target: "/home/trail.uwal.kr/html"
-          strip_components: 1
+          fetch-depth: 2
+
+      - name: 🔍 Check changed files from Git
+        id: diff
+        run: |
+          # Tìm danh sách file thay đổi từ Git commit (chạy tại Runner, không quét server)
+          if [ "${{ github.event.before }}" = "0000000000000000000000000000000000000000" ] || [ -z "${{ github.event.before }}" ]; then
+            git diff --name-only HEAD~1 HEAD > changed.txt || git ls-files > changed.txt
+          else
+            git diff --name-only ${{ github.event.before }} ${{ github.sha }} > changed.txt
+          fi
+
+          # Chỉ lọc các file nằm trong thư mục html/
+          grep '^html/' changed.txt | sed 's|^html/||' > deploy_list.txt || true
+
+          echo "=== DANH SÁCH FILE THAY ĐỔI CẦN ĐẨY ==="
+          cat deploy_list.txt
+
+          if [ -s deploy_list.txt ]; then
+            echo "has_changes=true" >> $GITHUB_OUTPUT
+          else
+            echo "has_changes=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: 🚀 Push only changed files to VPS
+        if: steps.diff.outputs.has_changes == 'true'
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq sshpass rsync
+          export SSHPASS="${{ secrets.SFTP_PASSWORD }}"
+
+          # --files-from: CHỈ gửi đúng các file trong danh sách, KHÔNG quét đệ quy thư mục server
+          sshpass -e rsync -avz --relative \
+            --files-from=deploy_list.txt \
+            -e "ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -p 22" \
+            ./html/ ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/home/trail.uwal.kr/html/
