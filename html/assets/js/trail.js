@@ -12,7 +12,7 @@
   main.innerHTML =
     '<div class="trail-wrap">' +
     '<div class="trail-head">' +
-    '  <div><h1>' + F.esc(meta.name) + '<small>' + meta.km + 'km</small></h1></div>' +
+    '  <div class="trail-title"><h1>' + F.esc(meta.name) + '<small>' + meta.km + 'km</small></h1></div>' +
     '  <div class="trail-meta">' +
     '    <span class="chip">' + F.icon.route + meta.sections + '개 구간</span>' +
     '    <span class="hint desktop">' + F.icon.pointer + '노선에 마우스를 올리면 정보가 표시됩니다 · Ctrl + 스크롤로 확대</span>' +
@@ -61,7 +61,16 @@
     var labels = F.el('img', { class: 'labels-img', alt: '', draggable: 'false', decoding: 'async' });
     var routes = F.svg('svg', { class: 'routes', viewBox: '0 0 ' + W + ' ' + H, preserveAspectRatio: 'none', 'aria-hidden': 'true' });
     var hits = F.svg('svg', { class: 'hits', viewBox: '0 0 ' + W + ' ' + H, preserveAspectRatio: 'none' });
-    canvas.appendChild(base); canvas.appendChild(routes); canvas.appendChild(labels); canvas.appendChild(hits);
+    canvas.appendChild(base);
+    // 지도 제목 (원본 위치·크기, 지도와 함께 확대/축소)
+    if (D.title) {
+      var tc = F.trailColor(D.id);
+      canvas.appendChild(F.el('div', { class: 'map-title', 'aria-hidden': 'true',
+        style: 'left:' + (D.title.x / W * 100) + '%;top:' + (D.title.y / H * 100) + '%;' +
+          '--fs:' + (D.title.size / W * 100) + 'cqw;--ks:' + (D.title.kmSize / W * 100) + 'cqw;--c:' + F.textColor(tc) },
+        '<span class="mt-name">' + F.esc(D.name) + '</span><span class="mt-km">' + D.km + '<small>km</small></span>'));
+    }
+    canvas.appendChild(routes); canvas.appendChild(labels); canvas.appendChild(hits);
     stage.insertBefore(canvas, loading);
 
     Promise.all([F.loadImg(base, D.base), F.loadImg(labels, D.labels)]).then(function () {

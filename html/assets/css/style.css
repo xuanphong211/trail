@@ -433,3 +433,45 @@ html.map-full-open, html.map-full-open body { overflow: hidden; }
   margin-top: 1cqw; margin-left: -.2cqw;
   color: #1c1715; font-size: 8.4cqw; font-weight: 800; line-height: 1.08; letter-spacing: -.05em;
 }
+
+/* 통합형: 지도를 크게(화면 높이 기준), 목록은 좁게 → 둘을 붙여서 가운데 정렬 */
+.overview {
+  grid-template-columns: minmax(0, calc(100vh - var(--header-h) - 36px)) 440px;
+  justify-content: center;
+}
+.overview .map-shell { max-width: none; }
+.trail-list { gap: 10px; }
+.trail-card { grid-template-columns: 150px 1fr auto; gap: 16px; padding: 10px; padding-right: 16px; }
+.trail-card .thumb { width: 150px; border-radius: 10px; }
+.trail-card .t { font-size: 17px; }
+.trail-card .m { margin-top: 4px; font-size: 13.5px; }
+@media (max-width: 1100px) {
+  .overview { grid-template-columns: 1fr; }
+  .overview .map-shell { max-width: min(100%, 760px); }
+}
+@media (max-width: 640px) {
+  .trail-card { grid-template-columns: 116px 1fr auto; gap: 12px; padding-right: 12px; }
+  .trail-card .thumb { width: 116px; }
+  .trail-card .t { font-size: 16px; }
+}
+
+/* 개별형 지도 제목 (지도 안, 원본 위치·크기 기준) */
+.map-canvas { container-type: inline-size; }
+.map-title {
+  position: absolute; display: flex; align-items: center; gap: .9cqw;
+  pointer-events: none; user-select: none; white-space: nowrap;
+}
+.mt-name { font-size: var(--fs); font-weight: 800; line-height: 1.2; letter-spacing: -.045em; color: #1c1715; }
+.mt-km {
+  display: inline-flex; align-items: baseline; gap: .05em;
+  padding: .22em .6em .2em; border-radius: 999px;
+  background: rgba(255, 255, 255, .94); box-shadow: 0 .2cqw .9cqw rgba(20, 35, 25, .12);
+  font-size: var(--ks); font-weight: 800; line-height: 1; letter-spacing: -.02em; color: var(--c);
+}
+.mt-km small { font-size: .72em; font-weight: 700; opacity: .85; }
+/* 제목은 한 곳에만: 데스크톱은 지도 안, 모바일은 지도 위 */
+.trail-title { display: none; }
+@media (max-width: 640px) {
+  .trail-title { display: block; }
+  .map-title { display: none; }
+}
