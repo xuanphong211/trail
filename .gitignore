@@ -1,0 +1,10 @@
+# Bỏ qua các file nguồn, thiết kế, excel và công cụ
+/tools/
+/사진/
+/상세노선도/
+/팝업창/
+*.xlsx
+*.png
+*.txt
+.DS_Store
+Thumbs.db
