@@ -3,7 +3,18 @@
   'use strict';
   var F = window.FOREST;
   var params = new URLSearchParams(location.search);
-  var meta = F.trailBySlug(params.get('trail') || 'jirisan') || F.trails[0];
+  var key = params.get('trail');
+  var meta = key ? F.trailBySlug(key) : F.trails[0];
+  if (!meta) {
+    // 잘못된 주소: 다른 숲길을 몰래 보여주지 않고 안내
+    F.header({});
+    document.getElementById('main').innerHTML =
+      '<div class="notfound"><h1>숲길을 찾을 수 없습니다</h1><p>주소의 <b>trail=' + F.esc(key) + '</b> 값을 확인해 주세요.</p>' +
+      '<div class="nf-list">' + F.trails.map(function (t) {
+        return '<a class="btn" href="map.html?trail=' + t.slug + '">' + t.id + '. ' + F.esc(t.name) + '</a>';
+      }).join('') + '</div></div>';
+    return;
+  }
 
   F.header({ current: meta.slug });
   document.title = meta.name + ' | 국가숲길';
@@ -26,12 +37,15 @@
     '</section>' +
     '</div>';
 
-  F.loadScript('assets/data/trail-' + meta.slug + '.js').then(function () {
+  F.loadScript('assets/data/trail-' + meta.slug + '.js' + (F.v ? '?v=' + F.v : '')).then(function () {
     init(F.detail[meta.slug]);
   }).catch(function (err) {
     main.querySelector('.map-loading').textContent = '지도 데이터를 불러오지 못했습니다.';
     console.error(err);
   });
+
+  // 모든 숲길 · 모든 구간의 노선 굵기를 통일 (원본 AI 파일마다 1.2~2.5pt 로 제각각)
+  var LINE_W = 2.4;
 
   function init(D) {
     var W = D.size[0], H = D.size[1];
@@ -59,6 +73,8 @@
     var canvas = F.el('div', { class: 'map-canvas' });
     var base = F.el('img', { alt: D.name + ' 지도', draggable: 'false', decoding: 'async' });
     var labels = F.el('img', { class: 'labels-img', alt: '', draggable: 'false', decoding: 'async' });
+    // 평상시 노선 = 디자인 원본 그대로의 이미지, 강조할 때만 SVG 선을 위에 그림
+    var routesImg = F.el('img', { class: 'routes-img', alt: '', draggable: 'false', decoding: 'async' });
     var routes = F.svg('svg', { class: 'routes', viewBox: '0 0 ' + W + ' ' + H, preserveAspectRatio: 'none', 'aria-hidden': 'true' });
     var hits = F.svg('svg', { class: 'hits', viewBox: '0 0 ' + W + ' ' + H, preserveAspectRatio: 'none' });
     canvas.appendChild(base);
@@ -70,10 +86,10 @@
           '--fs:' + (D.title.size / W * 100) + 'cqw;--ks:' + (D.title.kmSize / W * 100) + 'cqw;--c:' + F.textColor(tc) },
         '<span class="mt-name">' + F.esc(D.name) + '</span><span class="mt-km">' + D.km + '<small>km</small></span>'));
     }
-    canvas.appendChild(routes); canvas.appendChild(labels); canvas.appendChild(hits);
+    canvas.appendChild(routesImg); canvas.appendChild(routes); canvas.appendChild(labels); canvas.appendChild(hits);
     stage.insertBefore(canvas, loading);
 
-    Promise.all([F.loadImg(base, D.base), F.loadImg(labels, D.labels)]).then(function () {
+    Promise.all([F.loadImg(base, D.base), F.loadImg(labels, D.labels), F.loadImg(routesImg, D.routes)]).then(function () {
       loading.classList.add('done');
     });
 
@@ -81,7 +97,8 @@
     var gExtra = F.svg('g'), gSec = F.svg('g');
     routes.appendChild(gExtra); routes.appendChild(gSec);
     D.extras.forEach(function (x) {
-      var p = F.svg('path', { class: 'extra', d: x.d, stroke: x.color, 'stroke-width': x.width });
+      // 노선과 같은 굵은 선은 통일된 굵기로, 얇은 연결선(점선 등)은 원본 굵기 유지
+      var p = F.svg('path', { class: 'extra', d: x.d, stroke: x.color, 'stroke-width': x.width >= 1.5 ? LINE_W : x.width });
       if (x.dash) {
         var m = /\[([^\]]*)\]/.exec(x.dash);
         if (m && m[1].trim()) p.setAttribute('stroke-dasharray', m[1].trim().split(/\s+/).join(' '));
@@ -92,8 +109,8 @@
       var g = F.svg('g', { class: 'sec', 'data-i': i });
       var casing = F.svg('path', { class: 'casing', d: s.d });
       var line = F.svg('path', { class: 'line', d: s.d, stroke: s.color });
-      casing.style.strokeWidth = (s.width + 2.4) + 'px';
-      line.style.strokeWidth = s.width + 'px';
+      casing.style.strokeWidth = (LINE_W + 2.4) + 'px';
+      line.style.strokeWidth = LINE_W + 'px';
       g.appendChild(casing); g.appendChild(line);
       gSec.appendChild(g);
       var hit = F.svg('path', { d: s.d, 'data-i': i, role: 'button', 'aria-label': s.label + '. ' + s.name + ' ' + s.km + 'km' });
@@ -185,16 +202,16 @@
       activeSet.forEach(function (i) {
         var x = secs[i];
         x.g.classList.remove('is-active');
-        x.line.style.strokeWidth = x.data.width + 'px';
-        x.casing.style.strokeWidth = (x.data.width + 2.4) + 'px';
+        x.line.style.strokeWidth = LINE_W + 'px';
+        x.casing.style.strokeWidth = (LINE_W + 2.4) + 'px';
       });
       activeSet = idxs.slice();
       stage.classList.toggle('has-active', idxs.length > 0);
       idxs.forEach(function (i) {
         var x = secs[i];
         x.g.classList.add('is-active');
-        x.line.style.strokeWidth = (x.data.width * 1.9) + 'px';
-        x.casing.style.strokeWidth = (x.data.width * 1.9 + 2.6) + 'px';
+        x.line.style.strokeWidth = (LINE_W * 1.9) + 'px';
+        x.casing.style.strokeWidth = (LINE_W * 1.9 + 2.6) + 'px';
         gSec.appendChild(x.g); // 맨 위로
       });
       var nos = idxs.map(function (i) { return secs[i].data.no; });

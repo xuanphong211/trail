@@ -2,6 +2,8 @@
 (function () {
   'use strict';
   var F = (window.FOREST = window.FOREST || {});
+  // 캐시 방지 버전: <script src="...common.js?v=x"> 의 v 값을 동적으로 불러오는 파일에도 사용
+  F.v = ((document.currentScript && document.currentScript.src.split('?v=')[1]) || '').split('&')[0];
 
   /* ------------------------------------------------------------ icons */
   F.icon = {
@@ -80,10 +82,14 @@
     clearTimeout(t._h);
     t._h = setTimeout(function () { t.classList.remove('show'); }, 1400);
   };
+  /** 숲길 찾기: slug(naepo) · 번호(5) · 한글 이름(내포문화숲길) 모두 허용, 공백/대소문자/끝의 / 무시 */
   F.trailBySlug = function (key) {
+    var k = String(key == null ? '' : key).trim().replace(/\/+$/, '').toLowerCase().replace(/\s+/g, '');
+    if (!k) return null;
     var list = F.trails || [];
     for (var i = 0; i < list.length; i++) {
-      if (list[i].slug === key || String(list[i].id) === String(key)) return list[i];
+      var t = list[i];
+      if (t.slug === k || String(t.id) === k || t.name.replace(/\s+/g, '').toLowerCase() === k) return t;
     }
     return null;
   };

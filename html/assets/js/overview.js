@@ -38,7 +38,9 @@
     '<span class="ov-km">' + totalKm.toLocaleString() + '<small>km</small></span>' +
     '<span class="ov-sub">' + F.trails.length + '개 숲길로 이루어진</span>' +
     '<span class="ov-name">국가숲길</span>');
-  canvas.appendChild(base); canvas.appendChild(title); canvas.appendChild(overlays); canvas.appendChild(hits);
+  // 숲길 선을 벡터로 한 번 더 그림: 원본 선(0.7~1pt)이 화면에서 1px 미만이라 흐리게 보이는 문제 보완
+  var lines = F.svg('svg', { class: 'ov-lines', viewBox: '0 0 ' + W + ' ' + H, preserveAspectRatio: 'none', 'aria-hidden': 'true' });
+  canvas.appendChild(base); canvas.appendChild(title); canvas.appendChild(lines); canvas.appendChild(overlays); canvas.appendChild(hits);
   stage.insertBefore(canvas, loading);
 
   var loads = [F.loadImg(base, O.base)];
@@ -46,6 +48,8 @@
     var img = F.el('img', { alt: '', draggable: 'false', style:
       'left:' + (t.overlay.x / W * 100) + '%;top:' + (t.overlay.y / H * 100) + '%;width:' + (t.overlay.w / W * 100) + '%;height:' + (t.overlay.h / H * 100) + '%;--c:' + t.color });
     overlays.appendChild(img);
+    var line = F.svg('path', { d: t.d, stroke: t.color });
+    lines.appendChild(line);
     loads.push(F.loadImg(img, t.overlay.src));
     var g = F.svg('g', { 'data-id': t.id, role: 'link', 'aria-label': t.name + ' 상세 지도 보기', style: '--c:' + t.color });
     var path = F.svg('path', { d: t.d + (t.leader || '') });
@@ -57,13 +61,15 @@
       g.appendChild(box);
     }
     hits.appendChild(g);
-    return { t: t, img: img, g: g, path: path, box: box, meta: F.trailBySlug(t.slug) };
+    return { t: t, img: img, line: line, g: g, path: path, box: box, meta: F.trailBySlug(t.slug) };
   });
   Promise.all(loads).then(function () { loading.classList.add('done'); });
 
   // 미리보기 이미지 미리 받아두기
   setTimeout(function () { items.forEach(function (x) { (new Image()).src = x.t.preview; }); }, 1200);
 
+  var active = null, pinned = null, cards = {};
+  var curLw = 1.6;  // 현재 숲길 선 굵기 (확대 비율에 따라 바뀜)
   var updateTools;
   var popup = new F.Popup('preview');
   var pz = new F.PanZoom(stage, canvas, {
@@ -71,7 +77,10 @@
     aspect: W / H,
     onChange: function (pz) {
       var z = pz.pxPer(W);
-      items.forEach(function (x) { x.path.style.strokeWidth = (18 / z) + 'px'; });
+      // 화면에서 약 1.8px 이상, 확대해도 원본보다 가늘어지지 않게
+      var lw = Math.max(0.9, 1.8 / z);
+      items.forEach(function (x) { x.path.style.strokeWidth = (18 / z) + 'px'; x.line.style.strokeWidth = (x.t.id === active ? lw * 1.7 : lw) + 'px'; });
+      curLw = lw;
       if (updateTools) updateTools();
       popup.reposition();
     },
@@ -79,13 +88,14 @@
   });
   updateTools = F.mapTools(stage, pz);
 
-  var active = null, pinned = null, cards = {};
   function setActive(id) {
     active = id;
     stage.classList.toggle('has-active', id != null);
     items.forEach(function (x) {
       var on = x.t.id === id;
       x.img.classList.toggle('is-active', on);
+      x.line.classList.toggle('is-active', on);
+      x.line.style.strokeWidth = (on ? curLw * 1.7 : curLw) + 'px';
       if (x.box) x.box.classList.toggle('is-active', on);
       if (cards[x.t.id]) cards[x.t.id].classList.toggle('is-active', on);
     });

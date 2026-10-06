@@ -144,14 +144,14 @@ a { color: inherit; }
 @keyframes shimmer { to { background-position: -150% 0; } }
 
 /* routes (visual) */
-.routes .sec, .routes .extra { transition: opacity .22s ease; }
+.routes-img { transition: opacity .22s ease; }
+.has-active .routes-img { opacity: .28; }
+/* 강조용 SVG 선: 평상시엔 숨김(원본 이미지가 보임), 선택된 구간만 표시 */
+.routes .sec { opacity: 0; transition: opacity .2s ease; }
 .routes .sec path { fill: none; stroke-linecap: round; stroke-linejoin: round; }
-.routes .sec .casing { stroke: #fff; opacity: 0; transition: opacity .2s, stroke-width .2s; }
+.routes .sec .casing { stroke: #fff; transition: stroke-width .2s; }
 .routes .sec .line { transition: stroke-width .2s; }
-.routes .extra { fill: none; stroke-linecap: round; stroke-linejoin: round; }
-.has-active .routes .sec:not(.is-active), .has-active .routes .extra { opacity: .3; }
-.routes .sec.is-active .casing { opacity: 1; }
-.routes .sec.is-active { filter: drop-shadow(0 0 2.2px rgba(0, 0, 0, .35)); }
+.routes .sec.is-active { opacity: 1; filter: drop-shadow(0 0 1.2px rgba(0, 0, 0, .18)); }
 .labels-img { transition: opacity .22s; }
 .has-active .labels-img { opacity: .9; }
 
@@ -357,7 +357,7 @@ html.map-full-open, html.map-full-open body { overflow: hidden; }
 .hits .label-box { rx: 6px; }
 .overlays img { position: absolute; transition: opacity .22s ease, filter .22s ease; pointer-events: none; }
 .has-active .overlays img:not(.is-active) { opacity: .2; }
-.overlays img.is-active { filter: drop-shadow(0 0 3px rgba(255, 255, 255, 1)) drop-shadow(0 0 6px var(--c)); }
+.overlays img.is-active { filter: none; }
 .hits .label-box.is-active { stroke: var(--c); stroke-width: 1.6; fill: rgba(255, 255, 255, .0); }
 
 .footer { margin-top: 40px; padding-top: 16px; border-top: 1px solid var(--line); font-size: 12.5px; color: var(--muted); display: flex; flex-wrap: wrap; gap: 6px 16px; justify-content: space-between; }
@@ -458,17 +458,15 @@ html.map-full-open, html.map-full-open body { overflow: hidden; }
 /* 개별형 지도 제목 (지도 안, 원본 위치·크기 기준) */
 .map-canvas { container-type: inline-size; }
 .map-title {
-  position: absolute; display: flex; align-items: center; gap: .9cqw;
+  position: absolute; display: flex; align-items: baseline; gap: .7cqw; margin-top: .34cqw;
   pointer-events: none; user-select: none; white-space: nowrap;
 }
-.mt-name { font-size: var(--fs); font-weight: 800; line-height: 1.2; letter-spacing: -.045em; color: #1c1715; }
+.mt-name { font-size: var(--fs); font-weight: 800; line-height: 1.2; letter-spacing: -.01em; color: #1c1715; }
 .mt-km {
-  display: inline-flex; align-items: baseline; gap: .05em;
-  padding: .22em .6em .2em; border-radius: 999px;
-  background: rgba(255, 255, 255, .94); box-shadow: 0 .2cqw .9cqw rgba(20, 35, 25, .12);
-  font-size: var(--ks); font-weight: 800; line-height: 1; letter-spacing: -.02em; color: var(--c);
+  /* 원본 디자인: 회색 · 굵게, 배경 없음 */
+  font-size: var(--ks); font-weight: 700; line-height: 1; letter-spacing: 0; color: #808080;
 }
-.mt-km small { font-size: .72em; font-weight: 700; opacity: .85; }
+.mt-km small { font-size: 1em; font-weight: 700; }
 /* 제목은 한 곳에만: 데스크톱은 지도 안, 모바일은 지도 위 */
 .trail-title { display: none; }
 @media (max-width: 640px) {
@@ -493,3 +491,14 @@ body {
 .chip { background: rgba(255, 255, 255, .85); }
 .footer { border-top-color: rgba(30, 60, 40, .1); }
 @media (max-width: 640px) { body { background-attachment: scroll; } }
+
+/* 잘못된 숲길 주소 안내 */
+.notfound { max-width: 640px; margin: 8vh auto; text-align: center; }
+.notfound h1 { margin: 0 0 8px; font-size: 26px; font-weight: 800; letter-spacing: -.03em; }
+.notfound p { margin: 0 0 22px; color: var(--muted); }
+.nf-list { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+
+/* 통합형 숲길 벡터 선 */
+.ov-lines path { fill: none; stroke-linecap: round; stroke-linejoin: round; transition: opacity .22s ease; }
+.has-active .ov-lines path:not(.is-active) { opacity: .2; }
+/* 선택된 숲길은 그림자 없이 선만 조금 굵게 (JS 에서 굵기 지정) */
