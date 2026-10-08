@@ -66,7 +66,7 @@
   Promise.all(loads).then(function () { loading.classList.add('done'); });
 
   // 미리보기 이미지 미리 받아두기
-  setTimeout(function () { items.forEach(function (x) { (new Image()).src = x.t.preview; }); }, 1200);
+  setTimeout(function () { items.forEach(function (x) { (new Image()).src = F.url(x.t.preview); }); }, 1200);
 
   var active = null, pinned = null, cards = {};
   var curLw = 1.6;  // 현재 숲길 선 굵기 (확대 비율에 따라 바뀜)
@@ -102,7 +102,7 @@
   }
   function html(x, pinnedMode) {
     var t = x.t;
-    return '<div class="popup-photo"><img src="' + t.preview + '" alt="' + F.esc(t.name) + ' 개별 노선도"></div>' +
+    return '<div class="popup-photo"><img src="' + F.url(t.preview) + '" alt="' + F.esc(t.name) + ' 개별 노선도"></div>' +
       '<div class="popup-body">' +
       '<h3 class="popup-title"><span class="num" style="background:' + t.color + '">' + t.id + '</span><span style="color:' + F.textColor(t.color) + '">' + F.esc(t.name) + '</span></h3>' +
       '<p class="popup-km">' + t.km + 'km · ' + t.sections + '개 구간</p>' +
@@ -188,7 +188,7 @@
   F.trails.forEach(function (m) {
     var color = F.trailColor(m.id);
     var a = F.el('a', { class: 'trail-card', href: 'map.html?trail=' + m.slug, style: '--c:' + color },
-      '<span class="thumb"><img src="' + m.preview + '" alt="" loading="lazy"></span>' +
+      '<span class="thumb"><img src="' + F.url(m.preview) + '" alt="" loading="lazy"></span>' +
       '<span><span class="t"><span class="num">' + m.id + '</span>' + F.esc(m.name) + '</span>' +
       '<span class="m" style="display:block">' + m.km + 'km · ' + m.sections + '개 구간</span></span>' +
       '<span class="arrow">' + F.icon.arrow + '</span>');

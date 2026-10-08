@@ -4,6 +4,8 @@
   var F = (window.FOREST = window.FOREST || {});
   // 캐시 방지 버전: <script src="...common.js?v=x"> 의 v 값을 동적으로 불러오는 파일에도 사용
   F.v = ((document.currentScript && document.currentScript.src.split('?v=')[1]) || '').split('&')[0];
+  // 이미지 등 리소스 주소에 버전 붙이기 (Cloudflare/브라우저 캐시에 남은 옛 이미지 방지)
+  F.url = function (src) { return F.v && src && src.indexOf('?') < 0 ? src + '?v=' + F.v : src; };
 
   /* ------------------------------------------------------------ icons */
   F.icon = {
@@ -70,7 +72,7 @@
   F.loadImg = function (img, src) {
     return new Promise(function (ok) {
       img.onload = img.onerror = function () { ok(); };
-      img.src = src;
+      img.src = F.url(src);
       if (img.complete && img.naturalWidth) ok();
     });
   };

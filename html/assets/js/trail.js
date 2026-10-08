@@ -159,7 +159,7 @@
       var ph = s.photos || [], pi = photoIndex || 0;
       var photo;
       if (ph.length) {
-        photo = '<div class="popup-photo"><img src="' + ph[pi].src + '" alt="' + F.esc(ph[pi].caption) + '">' +
+        photo = '<div class="popup-photo"><img src="' + F.url(ph[pi].src) + '" alt="' + F.esc(ph[pi].caption) + '">' +
           '<span class="badge" style="background:' + s.color + '">' + F.esc(s.label) + '</span>' +
           (ph.length > 1 ? '<span class="count">사진 ' + ph.length + '장</span>' : '') + '</div>';
       } else {
@@ -173,7 +173,7 @@
       }).join('');
       var res = s.resources && s.resources.length ? '<div class="res">대표 자원: ' + F.esc(s.resources.join(', ')) + '</div>' : '';
       var gallery = ph.length > 1 ? '<div class="popup-gallery">' + ph.map(function (p, k) {
-        return '<button type="button" data-k="' + k + '" aria-pressed="' + (k === pi) + '" aria-label="' + F.esc(p.caption) + '"><img src="' + p.src + '" alt=""></button>';
+        return '<button type="button" data-k="' + k + '" aria-pressed="' + (k === pi) + '" aria-label="' + F.esc(p.caption) + '"><img src="' + F.url(p.src) + '" alt=""></button>';
       }).join('') + '</div>' : '';
       return photo +
         '<div class="popup-body" style="--popup-color:' + s.color + '">' +
@@ -189,7 +189,7 @@
       var withPhoto = list.filter(function (x) { return x.data.photos && x.data.photos.length; })[0];
       var color = first.color, txt = F.textColor(color);
       var photo = withPhoto
-        ? '<div class="popup-photo"><img src="' + withPhoto.data.photos[0].src + '" alt=""></div>'
+        ? '<div class="popup-photo"><img src="' + F.url(withPhoto.data.photos[0].src) + '" alt=""></div>'
         : '<div class="popup-photo placeholder"><span class="ph">' + F.icon.image + '이미지 없음</span></div>';
       return photo + '<div class="popup-body"><h3 class="popup-title" style="color:' + txt + '">' + F.esc(r.title || '') + '</h3>' +
         '<p class="popup-km" style="color:' + txt + '">' + list.length + '개 코스 · ' + (Math.round(total * 10) / 10) + 'km</p>' +
@@ -261,7 +261,7 @@
       if (!b || pinnedKey == null || typeof pinnedKey !== 'number') return;
       var x = secs[pinnedKey], k = +b.getAttribute('data-k');
       var img = popup.el.querySelector('.popup-photo img');
-      img.src = x.data.photos[k].src;
+      img.src = F.url(x.data.photos[k].src);
       img.alt = x.data.photos[k].caption;
       popup.el.querySelectorAll('.popup-gallery button').forEach(function (bb) {
         bb.setAttribute('aria-pressed', bb === b ? 'true' : 'false');
