@@ -1,5 +1,6 @@
 # Bỏ qua các file nguồn, thiết kế, excel và công cụ
 /tools/
+/sua/
 /사진/
 /상세노선도/
 /팝업창/
